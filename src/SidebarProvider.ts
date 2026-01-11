@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as https from 'https'; // <--- Changed to HTTPS
+import * as https from 'https'; 
 
 export class GitTogetherProvider implements vscode.TreeDataProvider<FriendItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<FriendItem | undefined | null | void> = new vscode.EventEmitter<FriendItem | undefined | null | void>();
@@ -26,8 +26,8 @@ export class GitTogetherProvider implements vscode.TreeDataProvider<FriendItem> 
                 return;
             }
 
-            // YOUR NEW CLOUD URL
-            const serverUrl = 'https://git-together-server.onrender.com/friends';
+            
+            const serverUrl = 'https:
 
             https.get(serverUrl, (res) => {
                 let data = '';

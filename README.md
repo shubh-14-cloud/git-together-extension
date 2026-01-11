@@ -2,8 +2,8 @@
 
 **Git Together** is a VS Code extension that brings the "study hall" vibe to remote development. It creates a live dashboard in your editor, allowing you to see which friends are online and what they are working on in real-time.
 
-![Status](https://img.shields.io/badge/status-active-success)
-![Version](https://img.shields.io/badge/version-0.0.2-blue)
+![Status](https:
+![Version](https:
 
 ## 🚀 Key Features
 
