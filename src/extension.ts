@@ -1,70 +1,87 @@
 import * as vscode from 'vscode';
-import * as https from 'https';
-import { GitTogetherProvider } from './SidebarProvider';
+import axios from 'axios';
+import { SidebarProvider } from './SidebarProvider';
+
+// ⏱️ TRACK SESSION START (Reset when VS Code opens)
+const sessionStart = Date.now();
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('✅ EXTENSION STARTED!');
+    // 1. Setup Sidebar
+    const sidebarProvider = new SidebarProvider(context.extensionUri,context);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider("git-together-sidebar", sidebarProvider)
+    );
 
-    
-    const sidebarProvider = new GitTogetherProvider();
-    vscode.window.registerTreeDataProvider('gitTogetherFriends', sidebarProvider);
+    // 2. Status Bar Item (Shows current Room)
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    statusBarItem.command = "git-together.joinRoom";
+    context.subscriptions.push(statusBarItem);
 
-    
-    let loginCommand = vscode.commands.registerCommand('git-together.login', async () => {
-        
-        const username = await vscode.window.showInputBox({
-            placeHolder: 'Enter your username (e.g., alex_dev)',
-            prompt: 'Enter a unique name so friends can identify you!'
-        });
-
+    // 3. Command: Set Username
+    context.subscriptions.push(vscode.commands.registerCommand('git-together.setUsername', async () => {
+        const username = await vscode.window.showInputBox({ prompt: "Enter your username to appear in the list" });
         if (username) {
-            await context.globalState.update('git_username', username);
-            vscode.window.showInformationMessage(`✅ Logged in as: ${username}`);
+            await context.globalState.update('git-together-username', username);
+            vscode.window.showInformationMessage(`Logged in as: ${username}`);
+            triggerPing(context); // Ping immediately
         }
+    }));
+
+    // 4. Command: Join Room (NEW!)
+    context.subscriptions.push(vscode.commands.registerCommand('git-together.joinRoom', async () => {
+        const room = await vscode.window.showInputBox({ 
+            prompt: "Enter Room Name (e.g., 'Study-Group' or 'Global')", 
+            placeHolder: "global" 
+        });
+        if (room) {
+            await context.globalState.update('git-together-room', room); // Save room
+            vscode.window.showInformationMessage(`Joined Room: ${room}`);
+            sidebarProvider.refresh(); // Refresh sidebar
+            triggerPing(context);      // Ping immediately
+            updateStatusBar(context, statusBarItem);
+        }
+    }));
+
+    // 5. Auto-Ping on Save
+    vscode.workspace.onDidSaveTextDocument(() => {
+        triggerPing(context);
     });
 
-    
-    let saveListener = vscode.workspace.onDidSaveTextDocument((document) => {
-        console.log('📂 File Saved: ' + document.fileName);
-        sendPing(document, context);
-    });
-
-    context.subscriptions.push(loginCommand);
-    context.subscriptions.push(saveListener);
+    // Initial Status Bar Update
+    updateStatusBar(context, statusBarItem);
 }
 
-function sendPing(document: vscode.TextDocument, context: vscode.ExtensionContext) {
-    
-    let userId = context.globalState.get<string>('git_username') || 'Anonymous';
-    
-    
-    userId = userId.replace(/\s/g, '_');
-
-    const filename = document.fileName.split(/[\\/]/).pop();
-    const language = document.languageId;
-    
-    const payload = JSON.stringify({
-        userId: userId, 
-        filename: filename,
-        language: language,
-        project: 'vscode-extension'
-    });
-
-    const options = {
-        hostname: 'git-together-server.onrender.com', 
-        port: 443, 
-        path: '/ping',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': payload.length
-        }
-    };
-
-    const req = https.request(options, (res) => {});
-    req.on('error', (error) => { console.error('Error sending ping:', error); });
-    req.write(payload);
-    req.end();
+function updateStatusBar(context: vscode.ExtensionContext, item: vscode.StatusBarItem) {
+    const room = context.globalState.get('git-together-room') || 'global';
+    item.text = `$(organization) Git Together: ${room}`;
+    item.show();
 }
 
-export function deactivate() {}  
+async function triggerPing(context: vscode.ExtensionContext) {
+    const username = context.globalState.get('git-together-username');
+    const room = context.globalState.get('git-together-room') || 'global'; // Default to global
+
+    if (!username) return;
+
+    const editor = vscode.window.activeTextEditor;
+    const file = editor ? editor.document.fileName.split(/[\\/]/).pop() : "Idle";
+    const language = editor ? editor.document.languageId : "None";
+
+    // ⚠️ REPLACE WITH YOUR RENDER SERVER URL
+    const SERVER_URL = 'https://git-together-server.onrender.com/ping';
+
+    try {
+        await axios.post(SERVER_URL, {
+            username,
+            file,
+            language,
+            room,            // Sending the Room
+            sessionStart     // Sending the Time
+        });
+        console.log(`[Git Together] Ping sent for ${username} in room ${room}`);
+    } catch (error) {
+        console.error("Error sending ping:", error);
+    }
+}
+
+export function deactivate() {}

@@ -1,9 +1,13 @@
 {
   "name": "git-together-tracker",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shubh-14-cloud/git-together-extension"
+  },
   "publisher": "shubhdev",
   "displayName": "git-together-tracker",
   "description": "Tracks coding activity and shares it with friends.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -17,8 +21,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "git-together.login",
+        "command": "git-together.setUsername",
         "title": "Git Together: Set Username"
+      },
+      {
+        "command": "git-together.joinRoom",
+        "title": "Git Together: Join Room"
       }
     ],
     "viewsContainers": {
@@ -26,14 +34,15 @@
         {
           "id": "git-together-sidebar",
           "title": "Git Together",
-          "icon": "$(account)"
+          "icon": "$(broadcast)"
         }
       ]
     },
     "views": {
       "git-together-sidebar": [
         {
-          "id": "gitTogetherFriends",
+          "type": "webview",
+          "id": "git-together-sidebar",  
           "name": "Active Friends"
         }
       ]
@@ -48,14 +57,17 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3",
     "@vscode/test-cli": "^0.0.4",
-    "@vscode/test-electron": "^2.3.8"
+    "@vscode/test-electron": "^2.3.8",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.13.2"
   }
 }
