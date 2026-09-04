@@ -7,7 +7,7 @@
   "publisher": "shubhdev",
   "displayName": "git-together-tracker",
   "description": "Tracks coding activity and shares it with friends.",
-  "version": "0.0.3",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -16,7 +16,7 @@
   ],
   "main": "./out/extension.js",
   "activationEvents": [
-    "*"
+    "onStartupFinished"
   ],
   "contributes": {
     "commands": [
@@ -27,8 +27,22 @@
       {
         "command": "git-together.joinRoom",
         "title": "Git Together: Join Room"
+      },
+      {
+        "command": "git-together.refresh",
+        "title": "Git Together: Refresh",
+        "icon": "$(refresh)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "git-together.refresh",
+          "when": "view == git-together-sidebar",
+          "group": "navigation"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -42,7 +56,7 @@
       "git-together-sidebar": [
         {
           "type": "webview",
-          "id": "git-together-sidebar",  
+          "id": "git-together-sidebar",
           "name": "Active Friends"
         }
       ]
